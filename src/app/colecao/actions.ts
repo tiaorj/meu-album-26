@@ -84,6 +84,9 @@ export async function atualizarFigurinha(
 
     revalidatePath("/colecao");
     revalidatePath("/painel");
+    revalidatePath("/troca");
+    revalidatePath("/faltantes");
+    revalidatePath("/repetidas");
 
     return {
       ok: true,
@@ -113,6 +116,9 @@ export async function atualizarFigurinha(
 
   revalidatePath("/colecao");
   revalidatePath("/painel");
+  revalidatePath("/troca");
+  revalidatePath("/faltantes");
+  revalidatePath("/repetidas");
 
   return {
     ok: true,

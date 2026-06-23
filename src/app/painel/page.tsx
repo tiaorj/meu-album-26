@@ -346,6 +346,28 @@ export default async function PainelPage() {
           </h2>
 
           <div className="grid gap-4 md:grid-cols-2">
+<Link
+  href="/troca"
+  className="group flex items-center gap-4 rounded-3xl border border-green-200 bg-green-50 p-5 shadow-sm transition hover:border-green-300 hover:shadow-md active:scale-[0.99]"
+>
+  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-green-100 text-2xl">
+    🤝
+  </div>
+
+  <div className="flex-1">
+    <h3 className="font-bold text-green-900">
+      Modo troca
+    </h3>
+
+    <p className="mt-1 text-sm text-green-700">
+      Consulte faltantes e repetidas rapidamente.
+    </p>
+  </div>
+
+  <span className="text-3xl text-green-400 transition group-hover:translate-x-1 group-hover:text-green-700">
+    ›
+  </span>
+</Link>            
             <Link
               href="/colecao"
               className="group flex items-center gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-green-300 hover:shadow-md"

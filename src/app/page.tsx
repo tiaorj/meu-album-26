@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 const resumo = [
   {
     titulo: "Já coladas",
@@ -34,21 +36,25 @@ const atalhos = [
     titulo: "Minha coleção",
     descricao: "Visualize todas as figurinhas",
     icone: "📚",
+    href: "/colecao",
   },
   {
     titulo: "Figurinhas faltantes",
     descricao: "Veja o que ainda falta",
     icone: "🔍",
+    href: "/faltantes",
   },
   {
     titulo: "Figurinhas repetidas",
     descricao: "Organize suas trocas",
     icone: "🔄",
+    href: "/repetidas",
   },
   {
-    titulo: "Seleções",
-    descricao: "Acompanhe país por país",
-    icone: "🌎",
+    titulo: "Modo troca",
+    descricao: "Consulta rápida durante as trocas",
+    icone: "🤝",
+    href: "/troca",
   },
 ];
 
@@ -71,12 +77,12 @@ export default function Home() {
             </div>
           </div>
 
-          <button
-            type="button"
-            className="rounded-xl bg-white/15 px-4 py-2 text-sm font-semibold transition hover:bg-white/25"
+          <Link
+            href="/login"
+            className="touch-manipulation rounded-xl bg-white/15 px-4 py-2 text-sm font-semibold transition hover:bg-white/25 active:scale-95"
           >
             Entrar
-          </button>
+          </Link>
         </div>
       </header>
 
@@ -150,20 +156,20 @@ export default function Home() {
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-lg font-bold text-slate-900">Acesso rápido</h2>
 
-            <button
-              type="button"
-              className="text-sm font-semibold text-green-700"
+            <Link
+              href="/colecao"
+              className="touch-manipulation text-sm font-semibold text-green-700"
             >
               Ver todas
-            </button>
+            </Link>
           </div>
 
           <div className="grid gap-3 md:grid-cols-2">
             {atalhos.map((atalho) => (
-              <button
+              <Link
                 key={atalho.titulo}
-                type="button"
-                className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-green-300 hover:shadow-md"
+                href={atalho.href}
+                className="touch-manipulation flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-green-300 hover:shadow-md active:scale-[0.99]"
               >
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-green-50 text-2xl">
                   {atalho.icone}
@@ -178,7 +184,7 @@ export default function Home() {
                 </div>
 
                 <span className="text-xl text-slate-400">›</span>
-              </button>
+              </Link>
             ))}
           </div>
         </section>
@@ -202,39 +208,47 @@ export default function Home() {
         </section>
       </section>
 
-      <nav className="fixed inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 backdrop-blur md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-slate-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
         <div className="mx-auto grid max-w-md grid-cols-4 px-2 py-2">
-          <button
-            type="button"
-            className="flex flex-col items-center gap-1 rounded-xl px-2 py-1 text-green-700"
+          <Link
+            href="/"
+            className="touch-manipulation flex flex-col items-center gap-1 rounded-xl px-2 py-1 text-green-700 active:bg-green-50"
           >
             <span className="text-xl">🏠</span>
-            <span className="text-xs font-semibold">Início</span>
-          </button>
+            <span className="text-xs font-semibold">
+              Início
+            </span>
+          </Link>
 
-          <button
-            type="button"
-            className="flex flex-col items-center gap-1 rounded-xl px-2 py-1 text-slate-500"
+          <Link
+            href="/colecao"
+            className="touch-manipulation flex flex-col items-center gap-1 rounded-xl px-2 py-1 text-slate-500 active:bg-slate-100"
           >
             <span className="text-xl">📚</span>
-            <span className="text-xs">Coleção</span>
-          </button>
+            <span className="text-xs">
+              Coleção
+            </span>
+          </Link>
 
-          <button
-            type="button"
-            className="flex flex-col items-center gap-1 rounded-xl px-2 py-1 text-slate-500"
+          <Link
+            href="/troca"
+            className="touch-manipulation flex flex-col items-center gap-1 rounded-xl px-2 py-1 text-slate-500 active:bg-slate-100"
           >
-            <span className="text-xl">🔄</span>
-            <span className="text-xs">Trocas</span>
-          </button>
+            <span className="text-xl">🤝</span>
+            <span className="text-xs">
+              Troca
+            </span>
+          </Link>
 
-          <button
-            type="button"
-            className="flex flex-col items-center gap-1 rounded-xl px-2 py-1 text-slate-500"
+          <Link
+            href="/login"
+            className="touch-manipulation flex flex-col items-center gap-1 rounded-xl px-2 py-1 text-slate-500 active:bg-slate-100"
           >
             <span className="text-xl">👤</span>
-            <span className="text-xs">Perfil</span>
-          </button>
+            <span className="text-xs">
+              Entrar
+            </span>
+          </Link>
         </div>
       </nav>
     </main>
