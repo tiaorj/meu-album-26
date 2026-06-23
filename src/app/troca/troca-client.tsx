@@ -5,6 +5,8 @@ import {
   useState,
 } from "react";
 
+import { useColecaoRapida } from "@/hooks/use-colecao-rapida";
+
 export type TrocaItem = {
   id: string;
   codigo: string;
@@ -33,6 +35,13 @@ type GrupoTroca = {
   codigo: string;
   nome: string;
   itens: TrocaItem[];
+};
+
+type UltimaAcao = {
+  figurinhaId: string;
+  quantidadeAnterior: number;
+  coladaAnterior: boolean;
+  mensagem: string;
 };
 
 function normalizarTexto(
@@ -68,47 +77,90 @@ export function TrocaClient({
   const [mensagem, setMensagem] =
     useState("");
 
+  const [
+    ultimaAcao,
+    setUltimaAcao,
+  ] = useState<UltimaAcao | null>(
+    null,
+  );
+
+  /*
+   * Mantém a coleção localmente e salva
+   * as alterações no Supabase em segundo plano.
+   */
+  const {
+    itens,
+    erro,
+    salvandoIds,
+    salvarAlteracao,
+  } = useColecaoRapida<TrocaItem>(
+    initialItems,
+  );
+
+  /*
+   * Total de códigos que o usuário
+   * ainda não possui.
+   */
   const totalFaltantes = useMemo(
     () =>
-      initialItems.filter(
-        (item) => item.quantidade === 0,
+      itens.filter(
+        (item) =>
+          item.quantidade === 0,
       ).length,
-    [initialItems],
+    [itens],
   );
 
+  /*
+   * Quantidade de códigos diferentes
+   * que possuem pelo menos uma repetida.
+   */
   const codigosRepetidos = useMemo(
     () =>
-      initialItems.filter(
-        (item) => item.repetidas > 0,
+      itens.filter(
+        (item) =>
+          item.repetidas > 0,
       ).length,
-    [initialItems],
+    [itens],
   );
 
+  /*
+   * Soma de todas as unidades repetidas.
+   */
   const unidadesRepetidas = useMemo(
     () =>
-      initialItems.reduce(
+      itens.reduce(
         (total, item) =>
           total + item.repetidas,
         0,
       ),
-    [initialItems],
+    [itens],
   );
 
+  /*
+   * Define quais itens pertencem
+   * ao modo atualmente selecionado.
+   */
   const itensDoModo = useMemo(() => {
     if (modo === "repetidas") {
-      return initialItems.filter(
-        (item) => item.repetidas > 0,
+      return itens.filter(
+        (item) =>
+          item.repetidas > 0,
       );
     }
 
-    return initialItems.filter(
-      (item) => item.quantidade === 0,
+    return itens.filter(
+      (item) =>
+        item.quantidade === 0,
     );
   }, [
-    initialItems,
+    itens,
     modo,
   ]);
 
+  /*
+   * Seleções que possuem itens
+   * dentro do modo atual.
+   */
   const selecoes = useMemo(() => {
     const mapa = new Map<
       string,
@@ -119,94 +171,137 @@ export function TrocaClient({
     >();
 
     itensDoModo.forEach((item) => {
-      if (!mapa.has(item.selecaoCodigo)) {
-        mapa.set(item.selecaoCodigo, {
-          codigo: item.selecaoCodigo,
-          nome: item.selecaoNome,
-        });
+      if (
+        !mapa.has(
+          item.selecaoCodigo,
+        )
+      ) {
+        mapa.set(
+          item.selecaoCodigo,
+          {
+            codigo:
+              item.selecaoCodigo,
+
+            nome:
+              item.selecaoNome,
+          },
+        );
       }
     });
 
-    return Array.from(mapa.values()).sort(
-      (a, b) =>
-        a.nome.localeCompare(
-          b.nome,
-          "pt-BR",
-        ),
+    return Array.from(
+      mapa.values(),
+    ).sort((a, b) =>
+      a.nome.localeCompare(
+        b.nome,
+        "pt-BR",
+      ),
     );
   }, [itensDoModo]);
 
+  /*
+   * Aplica a busca e o filtro
+   * por seleção.
+   */
   const itensFiltrados = useMemo(() => {
     const termo =
       normalizarTexto(busca);
 
-    return itensDoModo.filter((item) => {
-      const selecaoCorreta =
-        selecaoSelecionada === "todas" ||
-        item.selecaoCodigo ===
-          selecaoSelecionada;
+    return itensDoModo.filter(
+      (item) => {
+        const selecaoCorreta =
+          selecaoSelecionada ===
+            "todas" ||
+          item.selecaoCodigo ===
+            selecaoSelecionada;
 
-      if (!selecaoCorreta) {
-        return false;
-      }
+        if (!selecaoCorreta) {
+          return false;
+        }
 
-      if (!termo) {
-        return true;
-      }
+        if (!termo) {
+          return true;
+        }
 
-      const texto = normalizarTexto(
-        [
-          item.codigo,
-          item.nome,
-          item.selecaoCodigo,
-          item.selecaoNome,
-        ].join(" "),
-      );
+        const textoPesquisavel =
+          normalizarTexto(
+            [
+              item.codigo,
+              item.nome,
+              item.selecaoCodigo,
+              item.selecaoNome,
+            ].join(" "),
+          );
 
-      return texto.includes(termo);
-    });
+        return textoPesquisavel.includes(
+          termo,
+        );
+      },
+    );
   }, [
     busca,
     itensDoModo,
     selecaoSelecionada,
   ]);
 
-  const grupos = useMemo<GrupoTroca[]>(
-    () => {
-      const mapa = new Map<
-        string,
-        GrupoTroca
-      >();
+  /*
+   * Agrupa os códigos por seleção.
+   */
+  const grupos = useMemo<
+    GrupoTroca[]
+  >(() => {
+    const mapa = new Map<
+      string,
+      GrupoTroca
+    >();
 
-      itensFiltrados.forEach((item) => {
-        const existente = mapa.get(
-          item.selecaoCodigo,
-        );
+    itensFiltrados.forEach(
+      (item) => {
+        const grupoExistente =
+          mapa.get(
+            item.selecaoCodigo,
+          );
 
-        if (existente) {
-          existente.itens.push(item);
+        if (grupoExistente) {
+          grupoExistente.itens.push(
+            item,
+          );
+
           return;
         }
 
-        mapa.set(item.selecaoCodigo, {
-          codigo: item.selecaoCodigo,
-          nome: item.selecaoNome,
-          itens: [item],
-        });
-      });
+        mapa.set(
+          item.selecaoCodigo,
+          {
+            codigo:
+              item.selecaoCodigo,
 
-      return Array.from(
-        mapa.values(),
-      ).sort((a, b) =>
-        a.nome.localeCompare(
-          b.nome,
-          "pt-BR",
-        ),
-      );
-    },
-    [itensFiltrados],
-  );
+            nome:
+              item.selecaoNome,
 
+            itens: [item],
+          },
+        );
+      },
+    );
+
+    return Array.from(
+      mapa.values(),
+    ).sort((a, b) =>
+      a.nome.localeCompare(
+        b.nome,
+        "pt-BR",
+      ),
+    );
+  }, [itensFiltrados]);
+
+  /*
+   * Na aba Procuro, o total é a
+   * quantidade de códigos.
+   *
+   * Na aba Repetidas, é a soma
+   * das unidades disponíveis.
+   */
   const totalExibido = useMemo(() => {
     if (modo === "faltantes") {
       return itensFiltrados.length;
@@ -222,6 +317,10 @@ export function TrocaClient({
     modo,
   ]);
 
+  /*
+   * Texto utilizado para copiar
+   * ou compartilhar no WhatsApp.
+   */
   const textoCompartilhamento =
     useMemo(() => {
       const titulo =
@@ -235,13 +334,16 @@ export function TrocaClient({
       ];
 
       grupos.forEach((grupo) => {
-        linhas.push(`*${grupo.nome}*`);
+        linhas.push(
+          `*${grupo.nome}*`,
+        );
 
         const codigos =
           grupo.itens
             .map((item) => {
               if (
-                modo === "repetidas"
+                modo ===
+                "repetidas"
               ) {
                 return `${item.codigo} x${item.repetidas}`;
               }
@@ -265,6 +367,7 @@ export function TrocaClient({
       }
 
       linhas.push("");
+
       linhas.push(
         "Lista gerada pelo Meu Álbum 26.",
       );
@@ -280,29 +383,151 @@ export function TrocaClient({
 
   const possuiFiltro =
     busca.trim() !== "" ||
-    selecaoSelecionada !== "todas";
+    selecaoSelecionada !==
+      "todas";
 
   function alterarModo(
     novoModo: ModoTroca,
   ) {
     setModo(novoModo);
-    setSelecaoSelecionada("todas");
+    setSelecaoSelecionada(
+      "todas",
+    );
     setBusca("");
     setMensagem("");
+    setUltimaAcao(null);
   }
 
   function limparFiltros() {
     setBusca("");
-    setSelecaoSelecionada("todas");
+
+    setSelecaoSelecionada(
+      "todas",
+    );
+
     setMensagem("");
+  }
+
+  /*
+   * Na aba Procuro, tocar em uma
+   * figurinha significa que ela foi
+   * recebida durante a troca.
+   */
+  function marcarComoTenho(
+    item: TrocaItem,
+  ) {
+    setMensagem("");
+
+    setUltimaAcao({
+      figurinhaId: item.id,
+
+      quantidadeAnterior:
+        item.quantidade,
+
+      coladaAnterior:
+        item.colada,
+
+      mensagem:
+        `${item.codigo} marcada como recebida.`,
+    });
+
+    /*
+     * Registra uma unidade, mas não
+     * marca automaticamente como colada.
+     */
+    salvarAlteracao(
+      item.id,
+      Math.max(
+        item.quantidade,
+        1,
+      ),
+      item.colada,
+    );
+  }
+
+  /*
+   * Utilizado quando o usuário entrega
+   * uma figurinha repetida.
+   */
+  function diminuirRepetida(
+    item: TrocaItem,
+  ) {
+    if (item.quantidade <= 1) {
+      return;
+    }
+
+    setMensagem("");
+
+    setUltimaAcao({
+      figurinhaId: item.id,
+
+      quantidadeAnterior:
+        item.quantidade,
+
+      coladaAnterior:
+        item.colada,
+
+      mensagem:
+        `Uma ${item.codigo} foi entregue.`,
+    });
+
+    salvarAlteracao(
+      item.id,
+      item.quantidade - 1,
+      item.colada,
+    );
+  }
+
+  /*
+   * Utilizado quando o usuário recebe
+   * mais uma unidade da figurinha.
+   */
+  function aumentarRepetida(
+    item: TrocaItem,
+  ) {
+    setMensagem("");
+
+    setUltimaAcao({
+      figurinhaId: item.id,
+
+      quantidadeAnterior:
+        item.quantidade,
+
+      coladaAnterior:
+        item.colada,
+
+      mensagem:
+        `Uma ${item.codigo} foi adicionada.`,
+    });
+
+    salvarAlteracao(
+      item.id,
+      item.quantidade + 1,
+      item.colada,
+    );
+  }
+
+  function desfazerUltimaAcao() {
+    if (!ultimaAcao) {
+      return;
+    }
+
+    salvarAlteracao(
+      ultimaAcao.figurinhaId,
+      ultimaAcao.quantidadeAnterior,
+      ultimaAcao.coladaAnterior,
+    );
+
+    setUltimaAcao(null);
   }
 
   function compartilharWhatsApp() {
     setMensagem("");
 
     /*
-     * Listas enormes podem ultrapassar o
-     * tamanho permitido pelo endereço do WhatsApp.
+     * Uma lista muito grande pode
+     * ultrapassar o tamanho suportado
+     * pelo endereço do WhatsApp.
      */
     if (
       textoCompartilhamento.length >
@@ -350,7 +575,8 @@ export function TrocaClient({
         textarea.style.position =
           "fixed";
 
-        textarea.style.opacity = "0";
+        textarea.style.opacity =
+          "0";
 
         document.body.appendChild(
           textarea,
@@ -360,7 +586,9 @@ export function TrocaClient({
         textarea.select();
 
         const resultado =
-          document.execCommand("copy");
+          document.execCommand(
+            "copy",
+          );
 
         document.body.removeChild(
           textarea,
@@ -385,14 +613,25 @@ export function TrocaClient({
 
   return (
     <div>
+      {erro && (
+        <div
+          role="alert"
+          className="mb-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+        >
+          {erro}
+        </div>
+      )}
+
       {/* CONTROLES FIXOS */}
       <section className="sticky top-0 z-30 -mx-3 border-b border-slate-200 bg-slate-100/95 px-3 pb-3 pt-1 backdrop-blur sm:-mx-4 sm:px-4">
-        {/* MODOS */}
+        {/* ABAS */}
         <div className="grid grid-cols-2 gap-2 rounded-2xl bg-slate-200 p-1">
           <button
             type="button"
             onClick={() =>
-              alterarModo("faltantes")
+              alterarModo(
+                "faltantes",
+              )
             }
             className={`touch-manipulation rounded-xl px-3 py-3 text-sm font-bold transition active:scale-[0.98] ${
               modo === "faltantes"
@@ -401,6 +640,7 @@ export function TrocaClient({
             }`}
           >
             Procuro
+
             <span className="ml-2 rounded-full bg-black/10 px-2 py-0.5 text-xs">
               {totalFaltantes}
             </span>
@@ -409,7 +649,9 @@ export function TrocaClient({
           <button
             type="button"
             onClick={() =>
-              alterarModo("repetidas")
+              alterarModo(
+                "repetidas",
+              )
             }
             className={`touch-manipulation rounded-xl px-3 py-3 text-sm font-bold transition active:scale-[0.98] ${
               modo === "repetidas"
@@ -418,6 +660,7 @@ export function TrocaClient({
             }`}
           >
             Repetidas
+
             <span className="ml-2 rounded-full bg-black/10 px-2 py-0.5 text-xs">
               {codigosRepetidos}
             </span>
@@ -476,7 +719,7 @@ export function TrocaClient({
           </button>
         </div>
 
-        {/* SELEÇÕES */}
+        {/* FILTRO POR SELEÇÃO */}
         <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
           <button
             type="button"
@@ -495,26 +738,28 @@ export function TrocaClient({
             Todas
           </button>
 
-          {selecoes.map((selecao) => (
-            <button
-              key={selecao.codigo}
-              type="button"
-              title={selecao.nome}
-              onClick={() =>
-                setSelecaoSelecionada(
-                  selecao.codigo,
-                )
-              }
-              className={`touch-manipulation shrink-0 rounded-full px-4 py-2 text-xs font-bold ${
-                selecaoSelecionada ===
-                selecao.codigo
-                  ? "bg-green-700 text-white"
-                  : "border border-slate-300 bg-white text-slate-600"
-              }`}
-            >
-              {selecao.codigo}
-            </button>
-          ))}
+          {selecoes.map(
+            (selecao) => (
+              <button
+                key={selecao.codigo}
+                type="button"
+                title={selecao.nome}
+                onClick={() =>
+                  setSelecaoSelecionada(
+                    selecao.codigo,
+                  )
+                }
+                className={`touch-manipulation shrink-0 rounded-full px-4 py-2 text-xs font-bold ${
+                  selecaoSelecionada ===
+                  selecao.codigo
+                    ? "bg-green-700 text-white"
+                    : "border border-slate-300 bg-white text-slate-600"
+                }`}
+              >
+                {selecao.codigo}
+              </button>
+            ),
+          )}
         </div>
       </section>
 
@@ -534,8 +779,8 @@ export function TrocaClient({
 
             {modo === "repetidas" && (
               <p className="text-xs text-slate-500">
-                {itensFiltrados.length} códigos
-                diferentes
+                {itensFiltrados.length}{" "}
+                códigos diferentes
               </p>
             )}
           </div>
@@ -545,9 +790,10 @@ export function TrocaClient({
               type="button"
               onClick={copiarLista}
               disabled={
-                itensFiltrados.length === 0
+                itensFiltrados.length ===
+                0
               }
-              className="touch-manipulation rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-bold text-slate-700 active:scale-95 disabled:opacity-40"
+              className="touch-manipulation rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-bold text-slate-700 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
             >
               📋 Copiar
             </button>
@@ -558,14 +804,21 @@ export function TrocaClient({
                 compartilharWhatsApp
               }
               disabled={
-                itensFiltrados.length === 0
+                itensFiltrados.length ===
+                0
               }
-              className="touch-manipulation rounded-xl bg-green-600 px-3 py-2 text-sm font-bold text-white active:scale-95 disabled:opacity-40"
+              className="touch-manipulation rounded-xl bg-green-600 px-3 py-2 text-sm font-bold text-white active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
             >
               📱 WhatsApp
             </button>
           </div>
         </div>
+
+        <p className="mt-3 text-xs leading-5 text-slate-500">
+          {modo === "faltantes"
+            ? "Toque em um código quando receber a figurinha."
+            : "Use − quando entregar uma repetida e + quando receber outra unidade."}
+        </p>
 
         {possuiFiltro && (
           <button
@@ -623,34 +876,110 @@ export function TrocaClient({
 
               <div className="grid grid-cols-4 gap-2 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10">
                 {grupo.itens.map(
-                  (item) => (
-                    <article
-                      key={item.id}
-                      title={`${item.codigo} — ${item.nome}`}
-                      className={`relative min-h-14 rounded-xl border px-1.5 py-2 text-center shadow-sm ${
-                        modo === "faltantes"
-                          ? "border-red-200 bg-red-50 text-red-900"
-                          : "border-amber-300 bg-amber-50 text-amber-950"
-                      }`}
-                    >
-                      <span className="block break-all text-base font-black leading-tight tracking-tight">
-                        {item.codigo}
-                      </span>
+                  (item) => {
+                    const estaSalvando =
+                      salvandoIds.has(
+                        item.id,
+                      );
 
-                      {modo ===
-                        "repetidas" && (
-                        <span className="absolute -right-1.5 -top-1.5 flex min-h-6 min-w-6 items-center justify-center rounded-full bg-amber-500 px-1 text-[11px] font-black text-amber-950 shadow">
-                          ×{item.repetidas}
-                        </span>
-                      )}
+                    /*
+                     * Na aba Procuro, todo o
+                     * cartão é clicável.
+                     */
+                    if (
+                      modo ===
+                      "faltantes"
+                    ) {
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          title={`Marcar ${item.codigo} como recebida`}
+                          onClick={() =>
+                            marcarComoTenho(
+                              item,
+                            )
+                          }
+                          className="touch-manipulation relative min-h-16 rounded-xl border border-red-200 bg-red-50 px-1.5 py-2 text-center text-red-900 shadow-sm transition active:scale-95 active:bg-red-100"
+                        >
+                          <span className="block break-all text-base font-black leading-tight tracking-tight">
+                            {item.codigo}
+                          </span>
 
-                      {mostrarNomes && (
-                        <span className="mt-1 block line-clamp-2 text-[10px] font-medium leading-tight opacity-75">
-                          {item.nome}
+                          {mostrarNomes && (
+                            <span className="mt-1 block line-clamp-2 text-[10px] font-medium leading-tight opacity-75">
+                              {item.nome}
+                            </span>
+                          )}
+
+                          <span className="mt-1 block text-[9px] font-bold uppercase text-red-500">
+                            Toque ao receber
+                          </span>
+
+                          {estaSalvando && (
+                            <span className="absolute right-1 top-1 h-2 w-2 animate-pulse rounded-full bg-blue-500" />
+                          )}
+                        </button>
+                      );
+                    }
+
+                    /*
+                     * Na aba Repetidas, os botões
+                     * diminuem ou aumentam a quantidade.
+                     */
+                    return (
+                      <article
+                        key={item.id}
+                        className="relative min-h-16 rounded-xl border border-amber-300 bg-amber-50 p-1.5 text-center text-amber-950 shadow-sm"
+                      >
+                        {estaSalvando && (
+                          <span className="absolute right-1 top-1 h-2 w-2 animate-pulse rounded-full bg-blue-500" />
+                        )}
+
+                        <span className="block break-all text-sm font-black leading-tight tracking-tight">
+                          {item.codigo}
                         </span>
-                      )}
-                    </article>
-                  ),
+
+                        {mostrarNomes && (
+                          <span className="mt-1 block line-clamp-1 text-[9px] font-medium leading-tight opacity-75">
+                            {item.nome}
+                          </span>
+                        )}
+
+                        <div className="mt-2 grid grid-cols-[26px_1fr_26px] items-center justify-center gap-1">
+                          <button
+                            type="button"
+                            aria-label={`Entregar uma ${item.codigo}`}
+                            onClick={() =>
+                              diminuirRepetida(
+                                item,
+                              )
+                            }
+                            className="touch-manipulation flex h-7 w-7 items-center justify-center rounded-lg bg-white text-base font-black text-red-700 shadow-sm active:scale-90"
+                          >
+                            −
+                          </button>
+
+                          <span className="text-xs font-black text-amber-900">
+                            ×{item.repetidas}
+                          </span>
+
+                          <button
+                            type="button"
+                            aria-label={`Adicionar uma ${item.codigo}`}
+                            onClick={() =>
+                              aumentarRepetida(
+                                item,
+                              )
+                            }
+                            className="touch-manipulation flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500 text-base font-black text-amber-950 shadow-sm active:scale-90"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </article>
+                    );
+                  },
                 )}
               </div>
             </section>
@@ -658,10 +987,13 @@ export function TrocaClient({
         })}
       </div>
 
+      {/* NENHUM RESULTADO */}
       {itensFiltrados.length === 0 && (
         <section className="mt-6 rounded-3xl border border-dashed border-slate-300 bg-white p-8 text-center">
           <div className="text-5xl">
-            {possuiFiltro ? "🔍" : "🎉"}
+            {possuiFiltro
+              ? "🔍"
+              : "🎉"}
           </div>
 
           <h2 className="mt-4 text-xl font-bold text-slate-900">
@@ -684,7 +1016,7 @@ export function TrocaClient({
             <button
               type="button"
               onClick={limparFiltros}
-              className="touch-manipulation mt-5 rounded-xl bg-green-700 px-5 py-3 text-sm font-bold text-white"
+              className="touch-manipulation mt-5 rounded-xl bg-green-700 px-5 py-3 text-sm font-bold text-white active:scale-95"
             >
               Limpar filtros
             </button>
@@ -700,6 +1032,25 @@ export function TrocaClient({
             repetidas.
           </p>
         )}
+
+      {/* DESFAZER ÚLTIMA MARCAÇÃO */}
+      {ultimaAcao && (
+        <div className="fixed inset-x-3 bottom-20 z-[60] mx-auto flex max-w-md items-center justify-between gap-3 rounded-2xl bg-slate-900 px-4 py-3 text-white shadow-2xl">
+          <p className="text-sm">
+            {ultimaAcao.mensagem}
+          </p>
+
+          <button
+            type="button"
+            onClick={
+              desfazerUltimaAcao
+            }
+            className="touch-manipulation shrink-0 rounded-xl bg-white px-3 py-2 text-sm font-bold text-slate-900 active:scale-95"
+          >
+            Desfazer
+          </button>
+        </div>
+      )}
     </div>
   );
 }
