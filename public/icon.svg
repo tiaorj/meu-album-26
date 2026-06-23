@@ -1,0 +1,50 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 512 512"
+>
+  <rect width="512" height="512" rx="110" fill="#15803d"/>
+
+  <rect
+    x="110"
+    y="82"
+    width="292"
+    height="348"
+    rx="28"
+    fill="#ffffff"
+    transform="rotate(-5 256 256)"
+  />
+
+  <circle cx="256" cy="210" r="82" fill="#facc15"/>
+
+  <path
+    d="M256 140
+       L276 184
+       L324 190
+       L289 223
+       L298 270
+       L256 247
+       L214 270
+       L223 223
+       L188 190
+       L236 184 Z"
+    fill="#15803d"
+  />
+
+  <rect
+    x="173"
+    y="318"
+    width="166"
+    height="24"
+    rx="12"
+    fill="#15803d"
+  />
+
+  <rect
+    x="203"
+    y="360"
+    width="106"
+    height="18"
+    rx="9"
+    fill="#94a3b8"
+  />
+</svg>
