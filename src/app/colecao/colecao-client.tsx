@@ -6,6 +6,7 @@ import {
 } from "react";
 
 import { useColecaoRapida } from "@/hooks/use-colecao-rapida";
+import { SalvamentoToast } from "@/components/salvamento-toast";
 
 export type FigurinhaItem = {
   id: string;
@@ -59,6 +60,7 @@ export function ColecaoClient({
     erro,
     salvandoIds,
     salvarAlteracao,
+    limparErro,
   } = useColecaoRapida<FigurinhaItem>(
     initialItems,
   );
@@ -352,38 +354,7 @@ export function ColecaoClient({
   ];
 
   return (
-    <div>
-      {/* ERRO */}
-      {erro && (
-        <div
-          role="alert"
-          className="mb-4 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"
-        >
-          <p className="font-bold">
-            Não foi possível salvar
-          </p>
-
-          <p className="mt-1">
-            {erro}
-          </p>
-        </div>
-      )}
-
-      {/* SALVAMENTO EM SEGUNDO PLANO */}
-      {salvandoIds.size > 0 && (
-        <div className="mb-4 flex items-center gap-3 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700">
-          <span className="h-3 w-3 animate-pulse rounded-full bg-blue-500" />
-
-          <span>
-            Salvando{" "}
-            {salvandoIds.size === 1
-              ? "uma alteração"
-              : `${salvandoIds.size} alterações`}
-            ...
-          </span>
-        </div>
-      )}
-
+    <div>           
       {/* BUSCA E SELEÇÃO */}
       <section className="mb-5 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
         <div className="grid gap-4 md:grid-cols-[1fr_260px]">
@@ -784,6 +755,14 @@ export function ColecaoClient({
           )}
         </section>
       )}
+
+      <SalvamentoToast
+        quantidadeSalvando={
+          salvandoIds.size
+        }
+        erro={erro}
+        onLimparErro={limparErro}
+      />
     </div>
   );
 }

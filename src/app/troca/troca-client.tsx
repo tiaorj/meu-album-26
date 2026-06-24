@@ -6,6 +6,7 @@ import {
 } from "react";
 
 import { useColecaoRapida } from "@/hooks/use-colecao-rapida";
+import { SalvamentoToast } from "@/components/salvamento-toast";
 
 export type TrocaItem = {
   id: string;
@@ -93,6 +94,7 @@ export function TrocaClient({
     erro,
     salvandoIds,
     salvarAlteracao,
+    limparErro,
   } = useColecaoRapida<TrocaItem>(
     initialItems,
   );
@@ -612,16 +614,7 @@ export function TrocaClient({
   }
 
   return (
-    <div>
-      {erro && (
-        <div
-          role="alert"
-          className="mb-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700"
-        >
-          {erro}
-        </div>
-      )}
-
+    <div>      
       {/* CONTROLES FIXOS */}
       <section className="sticky top-0 z-30 -mx-3 border-b border-slate-200 bg-slate-100/95 px-3 pb-3 pt-1 backdrop-blur sm:-mx-4 sm:px-4">
         {/* ABAS */}
@@ -1035,7 +1028,7 @@ export function TrocaClient({
 
       {/* DESFAZER ÚLTIMA MARCAÇÃO */}
       {ultimaAcao && (
-        <div className="fixed inset-x-3 bottom-20 z-[60] mx-auto flex max-w-md items-center justify-between gap-3 rounded-2xl bg-slate-900 px-4 py-3 text-white shadow-2xl">
+        <div className="fixed inset-x-3 bottom-40 z-[60] mx-auto flex max-w-md items-center justify-between gap-3 rounded-2xl bg-slate-900 px-4 py-3 text-white shadow-2xl">
           <p className="text-sm">
             {ultimaAcao.mensagem}
           </p>
@@ -1051,6 +1044,13 @@ export function TrocaClient({
           </button>
         </div>
       )}
+      <SalvamentoToast
+        quantidadeSalvando={
+          salvandoIds.size
+        }
+        erro={erro}
+        onLimparErro={limparErro}
+      />      
     </div>
   );
 }

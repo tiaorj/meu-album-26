@@ -6,6 +6,7 @@ import {
 } from "react";
 
 import { useColecaoRapida } from "@/hooks/use-colecao-rapida";
+import { SalvamentoToast } from "@/components/salvamento-toast";
 
 export type SelecaoFigurinhaItem = {
   id: string;
@@ -36,14 +37,15 @@ export function SelecaoClient({
   selecaoNome,
   initialItems,
 }: SelecaoClientProps) {
-  const {
+    const {
     itens,
     erro,
     salvandoIds,
     salvarAlteracao,
-  } =
+    limparErro,
+    } =
     useColecaoRapida<SelecaoFigurinhaItem>(
-      initialItems,
+        initialItems,
     );
 
   const [
@@ -232,14 +234,7 @@ export function SelecaoClient({
 
   return (
     <div>
-      {erro && (
-        <div
-          role="alert"
-          className="mb-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"
-        >
-          {erro}
-        </div>
-      )}
+    
 
       <section className="rounded-3xl bg-white p-4 shadow-sm">
         <div className="flex items-start justify-between gap-4">
@@ -537,6 +532,13 @@ export function SelecaoClient({
           </button>
         </section>
       )}
+        <SalvamentoToast
+        quantidadeSalvando={
+            salvandoIds.size
+        }
+        erro={erro}
+        onLimparErro={limparErro}
+        />      
     </div>
   );
 }
