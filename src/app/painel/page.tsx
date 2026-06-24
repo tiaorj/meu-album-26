@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
 import { InstallAppCard } from "@/components/install-app-card";
-
+import { MobileNav } from "@/components/mobile-nav";
 type ColecaoResumo = {
   quantidade: number;
   colada: boolean;
@@ -483,48 +483,7 @@ export default async function PainelPage() {
       </section>
 
       {/* NAVEGAÇÃO MOBILE */}
-      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 backdrop-blur md:hidden">
-        <div className="mx-auto grid max-w-md grid-cols-4 px-2 py-2">
-          <Link
-            href="/painel"
-            className="flex flex-col items-center gap-1 rounded-xl px-2 py-1 text-green-700"
-          >
-            <span className="text-xl">🏠</span>
-            <span className="text-xs font-semibold">
-              Início
-            </span>
-          </Link>
-
-          <Link
-            href="/colecao"
-            className="flex flex-col items-center gap-1 rounded-xl px-2 py-1 text-slate-500"
-          >
-            <span className="text-xl">📚</span>
-            <span className="text-xs">
-              Coleção
-            </span>
-          </Link>
-        <Link
-        href="/faltantes"
-        className="flex flex-col items-center gap-1 rounded-xl px-2 py-1 text-slate-500"
-        >
-        <span className="text-xl">🔍</span>
-
-        <span className="text-xs">
-            Faltantes
-        </span>
-        </Link>
-          <Link
-            href="/repetidas"
-            className="flex flex-col items-center gap-1 rounded-xl px-2 py-1 text-slate-500"
-          >
-            <span className="text-xl">🔄</span>
-            <span className="text-xs">
-              Repetidas
-            </span>
-          </Link>
-        </div>
-      </nav>
+      <MobileNav />
     </main>
   );
 }

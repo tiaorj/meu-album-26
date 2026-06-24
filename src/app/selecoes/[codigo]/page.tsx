@@ -11,6 +11,8 @@ import {
   type SelecaoFigurinhaItem,
 } from "./selecao-client";
 
+import { MobileNav } from "@/components/mobile-nav";
+
 type PageProps = {
   params: Promise<{
     codigo: string;
@@ -228,61 +230,7 @@ export default async function SelecaoDetalhePage({
         />
       </section>
 
-      <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-slate-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
-        <div className="mx-auto grid max-w-md grid-cols-4 px-2 py-2">
-          <Link
-            href="/painel"
-            className="touch-manipulation flex flex-col items-center gap-1 rounded-xl px-2 py-1 text-slate-500"
-          >
-            <span className="text-xl">
-              🏠
-            </span>
-
-            <span className="text-xs">
-              Início
-            </span>
-          </Link>
-
-          <Link
-            href="/colecao"
-            className="touch-manipulation flex flex-col items-center gap-1 rounded-xl px-2 py-1 text-slate-500"
-          >
-            <span className="text-xl">
-              📚
-            </span>
-
-            <span className="text-xs">
-              Coleção
-            </span>
-          </Link>
-
-          <Link
-            href="/selecoes"
-            className="touch-manipulation flex flex-col items-center gap-1 rounded-xl px-2 py-1 text-green-700"
-          >
-            <span className="text-xl">
-              🌎
-            </span>
-
-            <span className="text-xs font-semibold">
-              Seleções
-            </span>
-          </Link>
-
-          <Link
-            href="/troca"
-            className="touch-manipulation flex flex-col items-center gap-1 rounded-xl px-2 py-1 text-slate-500"
-          >
-            <span className="text-xl">
-              🤝
-            </span>
-
-            <span className="text-xs">
-              Troca
-            </span>
-          </Link>
-        </div>
-      </nav>
+      <MobileNav />
     </main>
   );
 }

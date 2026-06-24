@@ -7,6 +7,7 @@ import {
   RepetidasClient,
   type RepetidaItem,
 } from "./repetidas-client";
+import { MobileNav } from "@/components/mobile-nav";
 
 type SelecaoRelacionamento = {
   codigo: string;
@@ -231,6 +232,7 @@ export default async function RepetidasPage() {
           initialItems={repetidas}
         />
       </section>
+      <MobileNav />
     </main>
   );
 }

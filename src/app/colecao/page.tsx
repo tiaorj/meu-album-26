@@ -8,6 +8,8 @@ import {
   type FigurinhaItem,
 } from "./colecao-client";
 
+import { MobileNav } from "@/components/mobile-nav";
+
 type SelecaoRelacionamento = {
   codigo: string;
   nome: string;
@@ -168,7 +170,7 @@ export default async function ColecaoPage() {
       : 0;
 
   return (
-    <main className="min-h-screen bg-slate-100 pb-20">
+    <main className="min-h-screen bg-slate-100 pb-24">
       <header className="bg-green-700 text-white">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
           <div>
@@ -311,6 +313,8 @@ export default async function ColecaoPage() {
           initialItems={figurinhas}
         />
       </section>
+
+      <MobileNav />
     </main>
   );
 }
