@@ -235,7 +235,30 @@ export default async function ColecaoPage() {
             />
           </div>
         </div>
+            <Link
+              href="/selecoes"
+              className="mb-4 flex items-center justify-between rounded-2xl border border-green-200 bg-green-50 p-5 transition active:scale-[0.99]"
+            >
+              <div className="flex items-center gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-green-100 text-2xl">
+                  🌎
+                </div>
 
+                <div>
+                  <h2 className="font-bold text-green-900">
+                    Marcação por seleção
+                  </h2>
+
+                  <p className="mt-1 text-sm text-green-700">
+                    Marque rapidamente país por país.
+                  </p>
+                </div>
+              </div>
+
+              <span className="text-3xl text-green-700">
+                ›
+              </span>
+            </Link>
         <Link
         href="/faltantes"
         className="mb-4 flex items-center justify-between rounded-2xl border border-red-200 bg-red-50 p-5 transition hover:border-red-300 hover:shadow-sm"
@@ -244,15 +267,14 @@ export default async function ColecaoPage() {
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-100 text-2xl">
             🔍
             </div>
-
             <div>
-            <h2 className="font-bold text-red-900">
-                Minhas faltantes
-            </h2>
+              <h2 className="font-bold text-red-900">
+                  Minhas faltantes
+              </h2>
 
-            <p className="mt-1 text-sm text-red-700">
-                Veja e compartilhe as figurinhas que procura.
-            </p>
+              <p className="mt-1 text-sm text-red-700">
+                  Veja e compartilhe as figurinhas que procura.
+              </p>
             </div>
         </div>
 
